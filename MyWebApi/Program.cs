@@ -14,12 +14,15 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:3000").AllowAnyMethod().AllowAnyHeader();
     });
 });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy =>
+        policy.RequireRole("Admin"));
+});
 
 builder.Services.Configure<MySetting>(builder.Configuration.GetSection("DevSettings"));
 
 var app = builder.Build();
-app.UseMiddleware<MyAuthentication>();
-app.UseMiddleware<MyAuthorization>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -27,8 +30,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+// app.UseHttpsRedirection();
+app.UseMiddleware<MyAuthentication>();
+app.UseMiddleware<MyAuthorization>();
+app.UseAuthorization();
 
-app.UseHttpsRedirection();
+
 
 
 var summaries = new[]
@@ -37,7 +44,11 @@ var summaries = new[]
 };
 
 
-app.MapGet("/hello", (IOptions<MySetting> options) => options.Value.MyString)
+app.MapGet("/hello", (IOptions<MySetting> options) =>
+{
+    var value = options.Value.MyString ?? "Default Hello Value";
+    return Results.Ok(value);
+})
     .RequireAuthorization("Admin");
 
 app.MapGet("/weatherforecast", async () =>
