@@ -1,16 +1,28 @@
-# --- Build Stage ---
+# Build stage
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution and project files
-COPY MySln.sln ./
-COPY MyWebApi/MyWebApi.csproj MyWebApi/
-COPY MyClassLib/MyClassLib.csproj MyClassLib/
-COPY MyTests/MyTests.csproj MyTests/
+ENV ASPNETCORE_ENVIRONMENT=Development
 
-# Restore dependencies
-RUN dotnet restore MySln.sln
+# Copy everything and restore
+COPY . .
 
-# Copy everything else and build
-COPY . ./
 WORKDIR /src/MyWebApi
+RUN dotnet restore
+
+# Publish
+RUN dotnet publish -c Release -o /app/publish
+
+# Runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+# Expose port 80 to the outside world
+EXPOSE 80
+
+# Configure the app to listen on port 80
+ENV ASPNETCORE_URLS=http://+:80
+
+# Run the app
+ENTRYPOINT ["dotnet", "MyWebApi.dll"]
