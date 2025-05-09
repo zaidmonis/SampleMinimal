@@ -1,20 +1,16 @@
-# ---- Build stage ----
+# --- Build Stage ---
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /
+WORKDIR /src
 
-# Copy csproj and restore
-COPY ./MyWebApi/*.csproj ./MyWebApi/
-WORKDIR /MyWebApi
-RUN dotnet restore
+# Copy solution and project files
+COPY MySln.sln ./
+COPY MyWebApi/MyWebApi.csproj MyWebApi/
+COPY MyClassLib/MyClassLib.csproj MyClassLib/
+COPY MyTests/MyTests.csproj MyTests/
+
+# Restore dependencies
+RUN dotnet restore MySln.sln
 
 # Copy everything else and build
-COPY ./MyWebApi/. ./
-RUN dotnet publish -c Release -o /app/out
-
-# ---- Runtime stage ----
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
-WORKDIR /app
-COPY --from=build /app/out ./
-
-EXPOSE 80
-ENTRYPOINT ["dotnet", "MyApi.dll"]
+COPY . ./
+WORKDIR /src/MyWebApi
