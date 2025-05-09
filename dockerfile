@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /
 
 # Copy csproj and restore
-COPY ./src/MyApi/*.csproj ./MyApi/
+COPY ./MyWebApi/*.csproj ./MyWebApi/
 WORKDIR /MyWebApi
 RUN dotnet restore
 
